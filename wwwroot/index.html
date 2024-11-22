@@ -1,0 +1,151 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            margin: 5px;
+        }
+        .product, .order {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>Order System</h1>
+
+<h2>Add Product</h2>
+<form id="productForm">
+    <input type="text" id="productName" placeholder="Name" required>
+    <input type="text" id="productDescription" placeholder="Description">
+    <input type="text" id="productCategory" placeholder="Category" required>
+    <button type="submit">Add Product</button>
+</form>
+
+<h2>Product List</h2>
+<div id="productList"></div>
+
+<h2>Create Order</h2>
+<form id="orderForm">
+    <select id="userId">
+        <option value="1">User 1</option>
+        <option value="2">User 2</option>
+    </select>
+    <select id="productId" required></select>
+    <button type="submit">Create Order</button>
+</form>
+
+<h2>Order List</h2>
+<div id="orderList"></div>
+
+<script>
+    const apiUrl = "http://localhost:5299/api";
+
+    // Fetch products and display them
+    async function fetchProducts() {
+        const response = await fetch(`${apiUrl}/Product`);
+        const products = await response.json();
+        const productList = document.getElementById("productList");
+        const productSelect = document.getElementById("productId");
+
+        productList.innerHTML = "";
+        productSelect.innerHTML = "";
+
+        products.forEach(product => {
+            const productDiv = document.createElement("div");
+            productDiv.className = "product";
+            productDiv.innerHTML = `
+                    <strong>${product.name}</strong> (${product.category})
+                    <p>${product.description}</p>
+                    <button onclick="deleteProduct(${product.id})">Delete</button>
+                `;
+            productList.appendChild(productDiv);
+
+            const option = document.createElement("option");
+            option.value = product.id;
+            option.textContent = product.name;
+            productSelect.appendChild(option);
+        });
+    }
+
+    // Fetch orders and display them
+    async function fetchOrders() {
+        const response = await fetch(`${apiUrl}/Order`);
+        const orders = await response.json();
+        const orderList = document.getElementById("orderList");
+
+        orderList.innerHTML = "";
+        orders.forEach(order => {
+            const orderDiv = document.createElement("div");
+            orderDiv.className = "order";
+            orderDiv.innerHTML = `
+                    <strong>Order #${order.id}</strong> (User: ${order.userId})
+                    <p>Products: ${order.orderProducts.map(op => op.productId).join(", ")}</p>
+                    <button onclick="deleteOrder(${order.id})">Delete</button>
+                `;
+            orderList.appendChild(orderDiv);
+        });
+    }
+
+    // Add product
+    document.getElementById("productForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("productName").value;
+        const description = document.getElementById("productDescription").value;
+        const category = document.getElementById("productCategory").value;
+
+        await fetch(`${apiUrl}/Product`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, description, category })
+        });
+
+        document.getElementById("productForm").reset();
+        fetchProducts();
+    });
+
+    // Delete product
+    async function deleteProduct(id) {
+        await fetch(`${apiUrl}/Product/${id}`, { method: "DELETE" });
+        fetchProducts();
+    }
+
+    // Create order
+    document.getElementById("orderForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById("userId").value;
+        const productId = document.getElementById("productId").value;
+
+        await fetch(`${apiUrl}/Order`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, orderProducts: [{ productId }] })
+        });
+
+        document.getElementById("orderForm").reset();
+        fetchOrders();
+    });
+
+    // Delete order
+    async function deleteOrder(id) {
+        await fetch(`${apiUrl}/Order/${id}`, { method: "DELETE" });
+        fetchOrders();
+    }
+
+    // Initialize
+    fetchProducts();
+    fetchOrders();
+</script>
+</body>
+</html>

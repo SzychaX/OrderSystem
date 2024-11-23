@@ -52,50 +52,72 @@
 <script>
     const apiUrl = "http://localhost:5299/api";
 
+    // Generic fetch function with error handling
+    async function fetchWithErrorHandling(url, options) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                const error = await response.text();
+                console.error("API Error:", error);
+                alert(`Error: ${error}`);
+                return null;
+            }
+            return response;
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            alert(`Fetch Error: ${err.message}`);
+            return null;
+        }
+    }
+
     // Fetch products and display them
     async function fetchProducts() {
-        const response = await fetch(`${apiUrl}/Product`);
-        const products = await response.json();
-        const productList = document.getElementById("productList");
-        const productSelect = document.getElementById("productId");
+        const response = await fetchWithErrorHandling(`${apiUrl}/Product`);
+        if (response) {
+            const products = await response.json();
+            const productList = document.getElementById("productList");
+            const productSelect = document.getElementById("productId");
 
-        productList.innerHTML = "";
-        productSelect.innerHTML = "";
+            productList.innerHTML = "";
+            productSelect.innerHTML = "";
 
-        products.forEach(product => {
-            const productDiv = document.createElement("div");
-            productDiv.className = "product";
-            productDiv.innerHTML = `
+            products.forEach(product => {
+                const productDiv = document.createElement("div");
+                productDiv.className = "product";
+                productDiv.innerHTML = `
                     <strong>${product.name}</strong> (${product.category})
                     <p>${product.description}</p>
                     <button onclick="deleteProduct(${product.id})">Delete</button>
                 `;
-            productList.appendChild(productDiv);
+                productList.appendChild(productDiv);
 
-            const option = document.createElement("option");
-            option.value = product.id;
-            option.textContent = product.name;
-            productSelect.appendChild(option);
-        });
+                const option = document.createElement("option");
+                option.value = product.id;
+                option.textContent = product.name;
+                productSelect.appendChild(option);
+            });
+        }
     }
 
     // Fetch orders and display them
     async function fetchOrders() {
-        const response = await fetch(`${apiUrl}/Order`);
-        const orders = await response.json();
-        const orderList = document.getElementById("orderList");
+        const response = await fetchWithErrorHandling(`${apiUrl}/Order`);
+        if (response) {
+            const orders = await response.json();
+            const orderList = document.getElementById("orderList");
 
-        orderList.innerHTML = "";
-        orders.forEach(order => {
-            const orderDiv = document.createElement("div");
-            orderDiv.className = "order";
-            orderDiv.innerHTML = `
+            orderList.innerHTML = "";
+            orders.forEach(order => {
+                const orderDiv = document.createElement("div");
+                orderDiv.className = "order";
+                orderDiv.innerHTML = `
                     <strong>Order #${order.id}</strong> (User: ${order.userId})
                     <p>Products: ${order.orderProducts.map(op => op.productId).join(", ")}</p>
                     <button onclick="deleteOrder(${order.id})">Delete</button>
                 `;
-            orderList.appendChild(orderDiv);
-        });
+                orderList.appendChild(orderDiv);
+            });
+        }
     }
 
     // Add product
@@ -105,20 +127,24 @@
         const description = document.getElementById("productDescription").value;
         const category = document.getElementById("productCategory").value;
 
-        await fetch(`${apiUrl}/Product`, {
+        const response = await fetchWithErrorHandling(`${apiUrl}/Product`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, description, category })
         });
 
-        document.getElementById("productForm").reset();
-        fetchProducts();
+        if (response) {
+            document.getElementById("productForm").reset();
+            fetchProducts();
+        }
     });
 
     // Delete product
     async function deleteProduct(id) {
-        await fetch(`${apiUrl}/Product/${id}`, { method: "DELETE" });
-        fetchProducts();
+        const response = await fetchWithErrorHandling(`${apiUrl}/Product/${id}`, { method: "DELETE" });
+        if (response) {
+            fetchProducts();
+        }
     }
 
     // Create order
@@ -127,20 +153,33 @@
         const userId = document.getElementById("userId").value;
         const productId = document.getElementById("productId").value;
 
-        await fetch(`${apiUrl}/Order`, {
+        const response = await fetch(`${apiUrl}/Order`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, orderProducts: [{ productId }] })
+            body: JSON.stringify({
+                userId: parseInt(userId), // Wymagany tylko UserId
+                orderProducts: [
+                    { productId: parseInt(productId) } // Wymagany tylko ProductId
+                ]
+            })
         });
 
-        document.getElementById("orderForm").reset();
-        fetchOrders();
+        if (response.ok) {
+            document.getElementById("orderForm").reset();
+            fetchOrders();
+        } else {
+            const error = await response.json();
+            alert(`Error: ${JSON.stringify(error)}`);
+        }
     });
+
 
     // Delete order
     async function deleteOrder(id) {
-        await fetch(`${apiUrl}/Order/${id}`, { method: "DELETE" });
-        fetchOrders();
+        const response = await fetchWithErrorHandling(`${apiUrl}/Order/${id}`, { method: "DELETE" });
+        if (response) {
+            fetchOrders();
+        }
     }
 
     // Initialize

@@ -12,12 +12,17 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Konfiguracja klucza złożonego dla OrderProduct
         modelBuilder.Entity<OrderProduct>()
-            .HasKey(op => new { op.Id, op.ProductId });
+            .HasKey(op => new { op.OrderId, op.ProductId });
+
+        // Relacja Order -> OrderProducts
         modelBuilder.Entity<OrderProduct>()
             .HasOne(op => op.Order)
             .WithMany(o => o.OrderProducts)
-            .HasForeignKey(op => op.Id);
+            .HasForeignKey(op => op.OrderId);
+
+        // Relacja Product -> OrderProducts
         modelBuilder.Entity<OrderProduct>()
             .HasOne(op => op.Product)
             .WithMany()

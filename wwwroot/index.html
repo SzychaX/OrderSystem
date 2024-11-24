@@ -38,11 +38,14 @@
 
 <h2>Create Order</h2>
 <form id="orderForm">
-    <select id="userId">
+    <select id="userId" required>
+        <option value="" disabled selected>Select User</option>
         <option value="1">User 1</option>
         <option value="2">User 2</option>
     </select>
-    <select id="productId" required></select>
+    <select id="productId" required>
+        <option value="" disabled selected>Select Product</option>
+    </select>
     <button type="submit">Create Order</button>
 </form>
 
@@ -53,7 +56,7 @@
     const apiUrl = "http://localhost:5299/api";
 
     // Generic fetch function with error handling
-    async function fetchWithErrorHandling(url, options) {
+    async function fetchWithErrorHandling(url, options = {}) {
         try {
             const response = await fetch(url, options);
             if (!response.ok) {
@@ -62,7 +65,7 @@
                 alert(`Error: ${error}`);
                 return null;
             }
-            return response;
+            return response.json();
         } catch (err) {
             console.error("Fetch Error:", err);
             alert(`Fetch Error: ${err.message}`);
@@ -72,14 +75,13 @@
 
     // Fetch products and display them
     async function fetchProducts() {
-        const response = await fetchWithErrorHandling(`${apiUrl}/Product`);
-        if (response) {
-            const products = await response.json();
+        const products = await fetchWithErrorHandling(`${apiUrl}/Product`);
+        if (products) {
             const productList = document.getElementById("productList");
             const productSelect = document.getElementById("productId");
 
             productList.innerHTML = "";
-            productSelect.innerHTML = "";
+            productSelect.innerHTML = `<option value="" disabled selected>Select Product</option>`;
 
             products.forEach(product => {
                 const productDiv = document.createElement("div");
@@ -101,9 +103,8 @@
 
     // Fetch orders and display them
     async function fetchOrders() {
-        const response = await fetchWithErrorHandling(`${apiUrl}/Order`);
-        if (response) {
-            const orders = await response.json();
+        const orders = await fetchWithErrorHandling(`${apiUrl}/Order`);
+        if (orders) {
             const orderList = document.getElementById("orderList");
 
             orderList.innerHTML = "";
@@ -123,17 +124,17 @@
     // Add product
     document.getElementById("productForm").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const name = document.getElementById("productName").value;
-        const description = document.getElementById("productDescription").value;
-        const category = document.getElementById("productCategory").value;
+        const name = document.getElementById("productName").value.trim();
+        const description = document.getElementById("productDescription").value.trim();
+        const category = document.getElementById("productCategory").value.trim();
 
-        const response = await fetchWithErrorHandling(`${apiUrl}/Product`, {
+        const result = await fetchWithErrorHandling(`${apiUrl}/Product`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, description, category })
         });
 
-        if (response) {
+        if (result) {
             document.getElementById("productForm").reset();
             fetchProducts();
         }
@@ -141,45 +142,35 @@
 
     // Delete product
     async function deleteProduct(id) {
-        const response = await fetchWithErrorHandling(`${apiUrl}/Product/${id}`, { method: "DELETE" });
-        if (response) {
-            fetchProducts();
-        }
+        const result = await fetchWithErrorHandling(`${apiUrl}/Product/${id}`, { method: "DELETE" });
+        if (result !== null) fetchProducts();
     }
 
     // Create order
     document.getElementById("orderForm").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const userId = document.getElementById("userId").value;
-        const productId = document.getElementById("productId").value;
+        const userId = parseInt(document.getElementById("userId").value, 10);
+        const productId = parseInt(document.getElementById("productId").value, 10);
 
-        const response = await fetch(`${apiUrl}/Order`, {
+        const result = await fetchWithErrorHandling(`${apiUrl}/Order`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                userId: parseInt(userId), // Wymagany tylko UserId
-                orderProducts: [
-                    { productId: parseInt(productId) } // Wymagany tylko ProductId
-                ]
+                userId,
+                orderProducts: [{ productId }]
             })
         });
 
-        if (response.ok) {
+        if (result) {
             document.getElementById("orderForm").reset();
             fetchOrders();
-        } else {
-            const error = await response.json();
-            alert(`Error: ${JSON.stringify(error)}`);
         }
     });
 
-
     // Delete order
     async function deleteOrder(id) {
-        const response = await fetchWithErrorHandling(`${apiUrl}/Order/${id}`, { method: "DELETE" });
-        if (response) {
-            fetchOrders();
-        }
+        const result = await fetchWithErrorHandling(`${apiUrl}/Order/${id}`, { method: "DELETE" });
+        if (result !== null) fetchOrders();
     }
 
     // Initialize

@@ -23,11 +23,6 @@ public class ProductController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddProduct([FromBody] Product product)
     {
-        if (string.IsNullOrEmpty(product.Name) || string.IsNullOrEmpty(product.Category))
-        {
-            return BadRequest("Invalid product data");
-        }
-
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
 

@@ -29,21 +29,36 @@ public class OrderController : ControllerBase
     {
         if (order == null || order.OrderProducts == null || !order.OrderProducts.Any())
         {
-            return BadRequest(new { Error = "Order must have at least one product." });
+            return BadRequest(new { Message = "Order must include at least one product." });
         }
 
-        // Ustawienie daty zamówienia
+        // Ustaw datę zamówienia
         order.OrderDate = DateTime.UtcNow;
 
-        // Dodanie zamówienia i jego produktów do kontekstu
+        // Przetwarzaj produkty w zamówieniu
         foreach (var orderProduct in order.OrderProducts)
         {
-            orderProduct.Order = null; // Backend nie wymaga wypełnienia pełnego obiektu
+            orderProduct.Order = null; // Usuń pełne odwołanie do obiektu `Order`
+            orderProduct.OrderId = order.Id; // Przypisz `OrderId`
         }
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
 
         return Ok(order);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteOrder(int id)
+    {
+        var order = await _context.Orders.FindAsync(id);
+        if (order == null)
+        {
+            return NotFound();
+        }
+
+        _context.Orders.Remove(order);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }

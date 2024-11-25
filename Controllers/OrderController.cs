@@ -14,15 +14,24 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetOrders()
+    public async Task<IActionResult> GetOrders([FromQuery] int? userId)
     {
-        var orders = await _context.Orders
+        var query = _context.Orders
             .Include(o => o.OrderProducts)
-            .ThenInclude(op => op.Product) // Ładowanie produktów
-            .ToListAsync();
+            .ThenInclude(op => op.Product)
+            .Include(o => o.User)
+            .AsQueryable();
+
+        if (userId.HasValue)
+        {
+            query = query.Where(o => o.UserId == userId);
+        }
+
+        var orders = await query.ToListAsync();
 
         return Ok(orders);
     }
+
 
     [HttpPost]
     public async Task<IActionResult> CreateOrder([FromBody] Order order)
@@ -32,14 +41,20 @@ public class OrderController : ControllerBase
             return BadRequest(new { Message = "Order must include at least one product." });
         }
 
+        // Sprawdź, czy UserId jest poprawne
+        var user = await _context.Users.FindAsync(order.UserId);
+        if (user == null)
+        {
+            return BadRequest(new { Message = "Invalid UserId. User does not exist." });
+        }
+
         // Ustaw datę zamówienia
         order.OrderDate = DateTime.UtcNow;
 
-        // Przetwarzaj produkty w zamówieniu
+        // Usuń pełne odwołania do Order w OrderProducts
         foreach (var orderProduct in order.OrderProducts)
         {
-            orderProduct.Order = null; // Usuń pełne odwołanie do obiektu `Order`
-            orderProduct.OrderId = order.Id; // Przypisz `OrderId`
+            orderProduct.Order = null; // Nie potrzebujemy referencji obiektu Order
         }
 
         _context.Orders.Add(order);
@@ -47,6 +62,7 @@ public class OrderController : ControllerBase
 
         return Ok(order);
     }
+
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteOrder(int id)

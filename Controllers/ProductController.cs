@@ -14,11 +14,19 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetProducts()
+    public async Task<IActionResult> GetProducts([FromQuery] string? category)
     {
-        var products = await _context.Products.ToListAsync();
+        var query = _context.Products.AsQueryable();
+
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(p => p.Category == category);
+        }
+
+        var products = await query.ToListAsync();
         return Ok(products);
     }
+
 
     [HttpPost]
     public async Task<IActionResult> AddProduct([FromBody] Product product)

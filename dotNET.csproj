@@ -17,10 +17,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Frontend\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <None Include="wwwroot\index.html" />
     </ItemGroup>
 

@@ -73,7 +73,7 @@
 <script>
     const apiUrl = "http://localhost:5299/api";
 
-    // Generic fetch function with error handling
+    
     async function fetchWithErrorHandling(url, options = {}) {
         try {
             const response = await fetch(url, options);
@@ -91,7 +91,7 @@
         }
     }
 
-    // Fetch users and populate user-related dropdowns
+    
     async function fetchUsers() {
         const users = await fetchWithErrorHandling(`${apiUrl}/User`);
         if (users) {
@@ -128,7 +128,7 @@
     
 
 
-    // Fetch products and display them
+    
     async function fetchProducts(category = "") {
         const url = category ? `${apiUrl}/Product?category=${encodeURIComponent(category)}` : `${apiUrl}/Product`;
         console.log(`Fetching products from URL: ${url}`); // Debug
@@ -163,7 +163,7 @@
     }
 
 
-    // Fetch orders and display them
+   
     async function fetchOrders(userId = "") {
         const url = userId ? `${apiUrl}/Order?userId=${userId}` : `${apiUrl}/Order`;
         const orders = await fetchWithErrorHandling(url);
@@ -186,7 +186,7 @@
         }
     }
 
-    // Add user
+
     document.getElementById("userForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const firstName = document.getElementById("userFirstName").value.trim();
@@ -206,7 +206,7 @@
         }
     });
 
-    // Add product
+
     document.getElementById("productForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const name = document.getElementById("productName").value.trim();
@@ -225,14 +225,13 @@
         }
     });
 
-    // Delete product
+   
     async function deleteProduct(id) {
         const result = await fetchWithErrorHandling(`${apiUrl}/Product/${id}`, { method: "DELETE" });
         if (result !== null) fetchProducts();
     }
 
-    // Create multi-product order
-    // Create multi-product order
+  
     document.getElementById("orderForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const userId = parseInt(document.getElementById("userId").value, 10);
@@ -254,13 +253,13 @@
     });
 
 
-    // Delete order
+
     async function deleteOrder(id) {
         const result = await fetchWithErrorHandling(`${apiUrl}/Order/${id}`, { method: "DELETE" });
         if (result !== null) fetchOrders();
     }
 
-    // Initialize
+
     async function fetchCategories() {
         const products = await fetchWithErrorHandling(`${apiUrl}/Product`);
         if (products) {
@@ -290,7 +289,7 @@
     });
 
     fetchUsers();
-    fetchCategories(); // Pobierz i wyświetl kategorie
+    fetchCategories(); 
     fetchProducts();
     fetchOrders();
 </script>

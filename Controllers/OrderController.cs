@@ -40,21 +40,19 @@ public class OrderController : ControllerBase
         {
             return BadRequest(new { Message = "Order must include at least one product." });
         }
-
-        // Sprawdź, czy UserId jest poprawne
+        
         var user = await _context.Users.FindAsync(order.UserId);
         if (user == null)
         {
             return BadRequest(new { Message = "Invalid UserId. User does not exist." });
         }
-
-        // Ustaw datę zamówienia
+        
         order.OrderDate = DateTime.UtcNow;
 
-        // Usuń pełne odwołania do Order w OrderProducts
+        // Usuwa pełne odwołania do Order w OrderProducts
         foreach (var orderProduct in order.OrderProducts)
         {
-            orderProduct.Order = null; // Nie potrzebujemy referencji obiektu Order
+            orderProduct.Order = null;
         }
 
         _context.Orders.Add(order);

@@ -18,6 +18,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseDefaultFiles(new DefaultFilesOptions
+{
+    DefaultFileNames = new List<string> { "index.html" } // Ustaw index.html jako domyślny
+});
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthorization();

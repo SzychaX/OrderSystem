@@ -19,7 +19,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Włączenie obsługi plików statycznych
 app.UseStaticFiles();
+
+// Ręczne mapowanie do index.html
+app.MapGet("/", async (context) =>
+{
+    context.Response.Redirect("/index.html");
+});
+
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();

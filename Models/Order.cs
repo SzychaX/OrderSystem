@@ -7,5 +7,5 @@ public class Order
     public int UserId { get; set; } 
     public User? User { get; set; }
 
-    public List<OrderProduct> OrderProducts { get; set; } = new(); // Inicjalizowana domyślnie
+    public List<OrderProduct> OrderProducts { get; set; } = new(); 
 }

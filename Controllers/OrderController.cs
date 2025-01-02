@@ -40,25 +40,34 @@ public class OrderController : ControllerBase
         {
             return BadRequest(new { Message = "Order must include at least one product." });
         }
-        
+
+        // Sprawdź, czy użytkownik istnieje
         var user = await _context.Users.FindAsync(order.UserId);
         if (user == null)
         {
             return BadRequest(new { Message = "Invalid UserId. User does not exist." });
         }
-        
+
+        // Ustaw datę zamówienia
         order.OrderDate = DateTime.UtcNow;
 
-        // Usuwa pełne odwołania do Order w OrderProducts
+        // Ustawienie właściwego powiązania
         foreach (var orderProduct in order.OrderProducts)
         {
-            orderProduct.Order = null;
+            orderProduct.Order = order; // Wiążemy produkt z zamówieniem
         }
 
         _context.Orders.Add(order);
-        await _context.SaveChangesAsync();
 
-        return Ok(order);
+        try
+        {
+            await _context.SaveChangesAsync();
+            return Ok(order);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Message = "An error occurred while saving the order.", Error = ex.Message });
+        }
     }
 
 

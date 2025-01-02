@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produkty</title>
+</head>
+<body>
+<div class="products-container">
+    <h2>Produkty</h2>
+    <table id="productsTable">
+        <thead>
+        <tr>
+            <th>Wybierz</th>
+            <th>Nazwa</th>
+            <th>Opis</th>
+            <th>Kategoria</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <button id="addToCartBtn" disabled>Dodaj do koszyka</button>
+</div>
+
+<div class="cart-container">
+    <h3>Koszyk</h3>
+    <ul id="cartList" aria-live="polite"></ul>
+    <button id="placeOrderBtn" disabled>Złóż Zamówienie</button>
+</div>
+
+<script>
+    let selectedProducts = [];
+    let cart = [];
+
+    
+    async function fetchProducts() {
+        try {
+            const response = await fetch("/api/product");
+            if (!response.ok) {
+                throw new Error("Nie udało się pobrać listy produktów.");
+            }
+            const products = await response.json();
+            const tableBody = document.getElementById("productsTable").getElementsByTagName("tbody")[0];
+            tableBody.innerHTML = "";
+
+            products.forEach(product => {
+                const row = tableBody.insertRow();
+                row.innerHTML = ` 
+                    <td><input type="checkbox" class="productCheckbox" data-id="${product.id}" data-name="${product.name}" data-description="${product.description}" data-category="${product.category}"></td>
+                    <td>${product.name}</td>
+                    <td>${product.description}</td>
+                    <td>${product.category}</td>
+                `;
+            });
+
+            attachCheckboxListeners();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+   
+    function attachCheckboxListeners() {
+        document.querySelectorAll(".productCheckbox").forEach(checkbox => {
+            checkbox.addEventListener("change", function() {
+                const product = {
+                    id: checkbox.getAttribute("data-id"),
+                    name: checkbox.getAttribute("data-name"),
+                    description: checkbox.getAttribute("data-description"),
+                    category: checkbox.getAttribute("data-category"),
+                };
+
+                if (checkbox.checked) {
+                    selectedProducts.push(product);
+                } else {
+                    selectedProducts = selectedProducts.filter(p => p.id !== product.id);
+                }
+
+                updateCartButton();
+            });
+        });
+    }
+
+  
+    function updateCartButton() {
+        const addToCartBtn = document.getElementById("addToCartBtn");
+        addToCartBtn.disabled = selectedProducts.length === 0;
+    }
+
+  
+    document.getElementById("addToCartBtn").addEventListener("click", function() {
+        cart = [...selectedProducts];
+        updateCart();
+    });
+
+
+    function updateCart() {
+        const cartList = document.getElementById("cartList");
+        cartList.innerHTML = "";
+
+        cart.forEach(product => {
+            const listItem = document.createElement("li");
+            listItem.textContent = `${product.name} - ${product.category}`;
+            cartList.appendChild(listItem);
+        });
+
+        const placeOrderBtn = document.getElementById("placeOrderBtn");
+        placeOrderBtn.disabled = cart.length === 0;
+    }
+
+   
+    function clearCheckboxes() {
+        document.querySelectorAll(".productCheckbox").forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+   
+    document.getElementById("placeOrderBtn").addEventListener("click", async function () {
+        const userId = sessionStorage.getItem('userId'); // Pobieranie userId
+
+        if (!userId) {
+            alert("Musisz być zalogowany, aby złożyć zamówienie.");
+            return;
+        }
+
+        const order = {
+            userId: userId,
+            orderProducts: cart.map(product => ({
+                productId: product.id,
+            })),
+        };
+
+        console.log("Payload:", JSON.stringify(order, null, 2)); // Debug: sprawdzenie danych
+
+        try {
+            const response = await fetch("/api/order", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(order),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Nieznany błąd serwera.");
+            }
+
+            const orderResult = await response.json();
+            alert("Zamówienie zostało złożone!");
+            cart = [];
+            selectedProducts = [];
+            updateCart();
+            updateCartButton();
+        } catch (error) {
+            alert(`Nie udało się złożyć zamówienia: ${error.message}`);
+        }
+    });
+
+
+
+    fetchProducts();
+</script>
+</body>
+</html>

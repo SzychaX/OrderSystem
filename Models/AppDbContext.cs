@@ -25,8 +25,7 @@ public class AppDbContext : DbContext
             .HasOne(op => op.Product)
             .WithMany()
             .HasForeignKey(op => op.ProductId);
-
-        // Konfiguracja relacji Order -> User
+        
         modelBuilder.Entity<Order>()
             .HasOne(o => o.User)
             .WithMany()
